@@ -7,64 +7,68 @@ use Illuminate\Support\Facades\Http;
 class MidtransService
 {
     protected string $serverKey;
+    protected string $clientKey;
     protected string $apiUrl;
     protected bool $isProduction;
 
     public function __construct()
     {
         $this->serverKey = env('MIDTRANS_SERVER_KEY', '');
+        $this->clientKey = env('MIDTRANS_CLIENT_KEY', '');
         $this->isProduction = env('MIDTRANS_IS_PRODUCTION', false);
         $this->apiUrl = $this->isProduction
-            ? 'https://api.midtrans.com/v2'
-            : 'https://api.sandbox.midtrans.com/v2';
+            ? 'https://app.midtrans.com/snap/v1'
+            : 'https://app.sandbox.midtrans.com/snap/v1';
     }
 
     /**
-     * Create transaction with Midtrans
+     * Get Client Key for frontend use
      */
-    public function createTransaction(array $params): array
+    public function getClientKey(): string
     {
-        $orderId = $params['order_id'];
-        $grossAmount = $params['gross_amount'];
+        return $this->clientKey;
+    }
 
+    /**
+     * Create Snap transaction (returns redirect URL)
+     */
+    public function createSnapTransaction(array $params): array
+    {
         $transactionDetails = [
-            'order_id' => $orderId,
-            'gross_amount' => $grossAmount,
+            'order_id' => $params['order_id'],
+            'gross_amount' => (int) $params['gross_amount'],
         ];
 
         $payload = [
-            'payment_type' => $params['payment_type'] ?? 'qris',
             'transaction_details' => $transactionDetails,
             'customer_details' => [
-                'name' => $params['customer_name'] ?? 'Guest',
+                'first_name' => $params['customer_name'] ?? 'Guest',
                 'email' => $params['customer_email'] ?? 'guest@kantin.com',
                 'phone' => $params['customer_phone'] ?? '08123456789',
             ],
             'item_details' => $params['items'] ?? [],
         ];
 
-        // Add QRIS specific parameters
-        if ($params['payment_type'] === 'qris') {
-            $payload['qris'] = [
-                'acquirer' => 'gopay',
-            ];
-        }
-
-        // Add Bank Transfer specific parameters
-        if ($params['payment_type'] === 'bank_transfer') {
-            $payload['bank_transfer'] = [
-                'bank' => $params['bank'] ?? 'bca',
-                'va_number' => $params['va_number'] ?? rand(1000000000, 9999999999),
-            ];
-        }
+        // Add custom expiry (1 hour)
+        $payload['expiry'] = [
+            'start_time' => now()->format('Y-m-d H:i:s T'),
+            'unit' => 'hours',
+            'duration' => 1,
+        ];
 
         $response = Http::withHeaders([
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
             'Authorization' => 'Basic ' . base64_encode($this->serverKey . ':'),
-        ])->post($this->apiUrl . '/charge', $payload);
+        ])->post($this->apiUrl . '/transactions', $payload);
 
-        return $response->json();
+        $result = $response->json();
+
+        if (!$response->successful()) {
+            throw new \Exception('Midtrans API Error: ' . json_encode($result));
+        }
+
+        return $result;
     }
 
     /**
@@ -72,11 +76,15 @@ class MidtransService
      */
     public function getTransactionStatus(string $orderId): array
     {
+        $apiUrl = $this->isProduction
+            ? 'https://api.midtrans.com/v2'
+            : 'https://api.sandbox.midtrans.com/v2';
+
         $response = Http::withHeaders([
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
             'Authorization' => 'Basic ' . base64_encode($this->serverKey . ':'),
-        ])->get($this->apiUrl . '/' . $orderId . '/status');
+        ])->get($apiUrl . '/' . $orderId . '/status');
 
         return $response->json();
     }
@@ -108,5 +116,13 @@ class MidtransService
             'refund' => 'expired',
             default => 'pending',
         };
+    }
+
+    /**
+     * Check if API is properly configured
+     */
+    public function isConfigured(): bool
+    {
+        return !empty($this->serverKey) && !empty($this->clientKey);
     }
 }

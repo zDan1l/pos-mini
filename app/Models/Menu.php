@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Menu extends Model
 {
@@ -34,8 +34,8 @@ class Menu extends Model
         return $this->belongsTo(Vendor::class, 'idvendor', 'idvendor');
     }
 
-    public function detailPesanan(): BelongsToMany
+    public function detailPesanan(): HasMany
     {
-        return $this->belongsToMany(DetailPesanan::class, 'idmenu', 'idmenu');
+        return $this->hasMany(DetailPesanan::class, 'idmenu', 'idmenu');
     }
 }

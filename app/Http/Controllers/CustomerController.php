@@ -186,7 +186,6 @@ class CustomerController extends Controller
     public function processPayment(Request $request)
     {
         $request->validate([
-            'metode_bayar' => 'required|in:qris,bank_transfer',
             'customer_name' => 'nullable|string|max:255',
         ]);
 
@@ -198,6 +197,14 @@ class CustomerController extends Controller
                 'success' => false,
                 'message' => 'Keranjang belanja kosong',
             ], 400);
+        }
+
+        // Check if Midtrans is configured
+        if (!$this->midtransService->isConfigured()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Midtrans belum dikonfigurasi. Silakan hubungi admin.',
+            ], 500);
         }
 
         DB::beginTransaction();
@@ -223,7 +230,7 @@ class CustomerController extends Controller
 
                 $itemDetails[] = [
                     'id' => $menu->idmenu,
-                    'price' => $menu->harga,
+                    'price' => (int) $menu->harga,
                     'quantity' => $qty,
                     'name' => $menu->nama_menu,
                 ];
@@ -231,17 +238,10 @@ class CustomerController extends Controller
 
             $paymentRef = 'ORDER-' . strtoupper(Str::random(12));
 
-            // Determine Midtrans payment type
-            $midtransPaymentType = 'qris';
-            if ($request->metode_bayar === 'bank_transfer') {
-                $midtransPaymentType = 'bank_transfer';
-            }
-
-            // Create Midtrans transaction
-            $midtransResponse = $this->midtransService->createTransaction([
+            // Create Midtrans Snap transaction
+            $midtransResponse = $this->midtransService->createSnapTransaction([
                 'order_id' => $paymentRef,
                 'gross_amount' => (int) $total,
-                'payment_type' => $midtransPaymentType,
                 'customer_name' => $customer->name,
                 'customer_email' => $customer->email,
                 'items' => $itemDetails,
@@ -249,18 +249,15 @@ class CustomerController extends Controller
 
             // Save order
             $pesanan = Pesanan::create([
-                'nama' => 'Pesanan-' . $customer->name,
+                'nama' => 'POS-' . $paymentRef,
                 'timestamp' => now(),
                 'total' => $total,
-                'metode_bayar' => $request->metode_bayar,
+                'metode_bayar' => 'midtrans',
                 'status_bayar' => 'pending',
                 'payment_reference' => $paymentRef,
                 'user_id' => $customer->id,
                 'idvendor' => $vendorId,
             ]);
-
-            // Update order_id for Midtrans
-            $pesanan->update(['nama' => 'POS-' . $pesanan->idpesanan]);
 
             foreach ($menus as $menu) {
                 $qty = $cartItems[$menu->idmenu];
@@ -281,19 +278,19 @@ class CustomerController extends Controller
 
             DB::commit();
 
-            // Return Midtrans redirect URL
-            if (isset($midtransResponse['redirect_url'])) {
+            // Return Snap token
+            if (isset($midtransResponse['token'])) {
                 return response()->json([
                     'success' => true,
-                    'redirect_url' => $midtransResponse['redirect_url'],
+                    'snap_token' => $midtransResponse['token'],
+                    'redirect_url' => $midtransResponse['redirect_url'] ?? null,
                 ]);
             }
 
-            // Fallback if no redirect URL
             return response()->json([
-                'success' => true,
-                'redirect_url' => route('customer.payment', $pesanan->idpesanan),
-            ]);
+                'success' => false,
+                'message' => 'Gagal mendapatkan token pembayaran',
+            ], 500);
 
         } catch (\Exception $e) {
             DB::rollBack();

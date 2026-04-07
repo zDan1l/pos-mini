@@ -16,7 +16,7 @@
                     <input type="text" id="customer_name" name="customer_name"
                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                            placeholder="Kosongkan untuk menjadi Guest_0000001">
-                    <p class="text-sm text-gray-500 mt-2">Kosongkan untuk otomatis terdaftar sebagai Guest_0000001</p>
+                    <p class="text-sm text-gray-500 mt-2">Kosongkan untuk otomatis terdaftar sebagai Guest</p>
                 </div>
             </div>
 
@@ -45,32 +45,25 @@
                 </div>
             </div>
 
-            <!-- Metode Pembayaran -->
+            <!-- Metode Pembayaran Info -->
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h3 class="text-lg font-semibold mb-4">Metode Pembayaran</h3>
-
-                <div class="space-y-3">
-                    <label class="flex items-center p-4 border rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                        <input type="radio" name="metode_bayar" value="qris" checked class="mr-3">
-                        <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center text-white font-bold text-xs">QRIS</div>
-                            <div>
-                                <p class="font-medium">QRIS</p>
-                                <p class="text-sm text-gray-500">Scan QR untuk membayar</p>
-                            </div>
-                        </div>
-                    </label>
-
-                    <label class="flex items-center p-4 border rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                        <input type="radio" name="metode_bayar" value="bank_transfer" class="mr-3">
-                        <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center text-white font-bold text-xs">VA</div>
-                            <div>
-                                <p class="font-medium">Virtual Account</p>
-                                <p class="text-sm text-gray-500">Transfer melalui VA BCA/Mandiri/BNI</p>
-                            </div>
-                        </div>
-                    </label>
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+                    <i class="ph ph-info text-2xl text-blue-500 mt-0.5"></i>
+                    <div class="text-blue-700">
+                        <p class="font-medium">Pembayaran Midtrans</p>
+                        <p class="text-sm mt-1">Anda akan diarahkan ke halaman pembayaran Midtrans yang aman. Tersedia berbagai metode pembayaran seperti QRIS, Virtual Account, E-Wallet, dan lainnya.</p>
+                    </div>
+                </div>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <span class="px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-600">QRIS</span>
+                    <span class="px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-600">GoPay</span>
+                    <span class="px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-600">OVO</span>
+                    <span class="px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-600">Dana</span>
+                    <span class="px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-600">ShopeePay</span>
+                    <span class="px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-600">VA BCA</span>
+                    <span class="px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-600">VA Mandiri</span>
+                    <span class="px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-600">VA BNI</span>
                 </div>
             </div>
         </div>
@@ -97,7 +90,7 @@
                 </div>
 
                 <button onclick="processPayment()" id="btn-pay" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 px-4 rounded-xl transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed">
-                    Bayar Sekarang
+                    <i class="ph ph-credit-card mr-2"></i> Bayar Sekarang
                 </button>
 
                 <a href="{{ route('customer.cart') }}" class="block w-full text-center text-gray-600 mt-4 hover:text-gray-800">
@@ -109,36 +102,50 @@
 </div>
 
 @push('scripts')
+<script type="text/javascript"
+  src="{{ config('midtrans.is_production') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
+  data-client-key="{{ config('midtrans.client_key') }}"></script>
 <script>
     function processPayment() {
-        const metodeBayar = $('input[name="metode_bayar"]:checked').val();
         const customerName = $('#customer_name').val();
         const btnPay = $('#btn-pay');
 
-        if (!metodeBayar) {
-            alert('Pilih metode pembayaran');
-            return;
-        }
-
-        btnPay.prop('disabled', true).text('Memproses...');
+        btnPay.prop('disabled', true).html('<i class="ph ph-spinner ph-spin mr-2"></i> Memproses...');
 
         $.ajax({
             url: '{{ route('customer.process-payment') }}',
             method: 'POST',
             data: {
                 _token: '{{ csrf_token() }}',
-                metode_bayar: metodeBayar,
                 customer_name: customerName
             },
             success: function(response) {
-                if (response.success) {
-                    window.location.href = response.redirect_url;
+                if (response.success && response.snap_token) {
+                    // Open Midtrans Snap popup
+                    snap.pay(response.snap_token, {
+                        onSuccess: function(result) {
+                            window.location.href = '{{ route('customer.index') }}';
+                        },
+                        onPending: function(result) {
+                            window.location.href = '{{ route('customer.index') }}';
+                        },
+                        onError: function(result) {
+                            alert('Pembayaran gagal. Silakan coba lagi.');
+                            btnPay.prop('disabled', false).html('<i class="ph ph-credit-card mr-2"></i> Bayar Sekarang');
+                        },
+                        onClose: function() {
+                            btnPay.prop('disabled', false).html('<i class="ph ph-credit-card mr-2"></i> Bayar Sekarang');
+                        }
+                    });
+                } else {
+                    alert('Gagal memproses pembayaran');
+                    btnPay.prop('disabled', false).html('<i class="ph ph-credit-card mr-2"></i> Bayar Sekarang');
                 }
             },
             error: function(xhr) {
                 const error = xhr.responseJSON;
                 alert(error.message || 'Terjadi kesalahan');
-                btnPay.prop('disabled', false).text('Bayar Sekarang');
+                btnPay.prop('disabled', false).html('<i class="ph ph-credit-card mr-2"></i> Bayar Sekarang');
             }
         });
     }

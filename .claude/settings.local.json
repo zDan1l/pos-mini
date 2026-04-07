@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan:*)",
+      "Bash([ -L \"public/storage\" ])",
+      "mcp__ide__getDiagnostics",
+      "Bash(curl -s \"http://localhost:8000\" -o /dev/null -w \"%{http_code}\")",
+      "Bash(curl -s \"http://localhost:8000\")",
+      "Bash(curl -s \"http://localhost:8000/login\")"
+    ]
+  }
+}

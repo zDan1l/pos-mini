@@ -58,19 +58,22 @@ class User extends Authenticatable
     public static function createGuest(?string $name = null): self
     {
         $lastGuest = self::where('role', 'customer')
-            ->whereNotNull('idvendor')
+            ->whereNull('idvendor')
             ->orderBy('id', 'desc')
             ->first();
 
-        $nextNumber = $lastGuest
-            ? (int) filter_var($lastGuest->name, FILTER_SANITIZE_NUMBER_INT) + 1
-            : 1;
+        $nextNumber = 1;
+
+        if ($lastGuest && preg_match('/Guest_(\d+)/', $lastGuest->name, $matches)) {
+            $nextNumber = (int) $matches[1] + 1;
+        }
 
         return self::create([
             'name' => $name ?? 'Guest_' . str_pad($nextNumber, 7, '0', STR_PAD_LEFT),
             'email' => 'guest_' . $nextNumber . '@dummy.com',
             'password' => bcrypt('guest_password'),
             'role' => 'customer',
+            'idvendor' => null,
         ]);
     }
 }
