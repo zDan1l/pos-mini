@@ -330,6 +330,7 @@ class CustomerController extends Controller
 
         $orderId = $request->input('order_id');
         $transactionStatus = $request->input('transaction_status');
+        $paymentType = $request->input('payment_type');
         $fraudStatus = $request->input('fraud_status');
 
         // Find order by payment_reference
@@ -340,6 +341,9 @@ class CustomerController extends Controller
             return response()->json(['status' => 'error'], 404);
         }
 
+        // Map Midtrans payment type to our payment method
+        $paymentMethod = $this->mapPaymentType($paymentType);
+
         // Update order status
         $newStatus = $this->midtransService->mapStatus($transactionStatus);
 
@@ -347,9 +351,10 @@ class CustomerController extends Controller
         try {
             $pesanan->update([
                 'status_bayar' => $newStatus,
+                'metode_bayar' => $paymentMethod,
             ]);
 
-            Log::info("Order {$pesanan->idpesanan} status updated to: {$newStatus}");
+            Log::info("Order {$pesanan->idpesanan} status updated to: {$newStatus}, payment method: {$paymentMethod}");
 
             DB::commit();
         } catch (\Exception $e) {
@@ -359,6 +364,20 @@ class CustomerController extends Controller
         }
 
         return response()->json(['status' => 'ok']);
+    }
+
+    /**
+     * Map Midtrans payment type to our payment method
+     */
+    private function mapPaymentType(string $paymentType): string
+    {
+        return match ($paymentType) {
+            'qris' => 'qris',
+            'bank_transfer' => 'virtual_account',
+            'va', 'bca_va', 'mandiri_bill', 'bni_va', 'bri_va', 'cimb_va', 'permata_va' => 'virtual_account',
+            'gopay', 'shopeepay' => 'ewallet',
+            default => 'midtrans',
+        };
     }
 
     public function orderSuccess($idpesanan)
@@ -371,13 +390,24 @@ class CustomerController extends Controller
             try {
                 $midtransStatus = $this->midtransService->getTransactionStatus($pesanan->payment_reference);
                 $newStatus = $this->midtransService->mapStatus($midtransStatus['transaction_status'] ?? 'pending');
+                $paymentType = $midtransStatus['payment_type'] ?? null;
 
-                if ($newStatus === 'lunas') {
-                    $pesanan->update(['status_bayar' => 'lunas']);
+                $updateData = ['status_bayar' => $newStatus];
+
+                // Also update payment method if available
+                if ($paymentType) {
+                    $updateData['metode_bayar'] = $this->mapPaymentType($paymentType);
+                }
+
+                if ($newStatus === 'lunas' || $paymentType) {
+                    $pesanan->update($updateData);
                 }
             } catch (\Exception $e) {
                 Log::error('Error checking Midtrans status: ' . $e->getMessage());
             }
+
+            // Reload to get updated data
+            $pesanan = $pesanan->fresh();
 
             if ($pesanan->status_bayar !== 'lunas') {
                 return redirect()->route('customer.index')->with('error', 'Pesanan belum lunas');

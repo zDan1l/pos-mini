@@ -24,6 +24,22 @@ class Vendor extends Model
 
     public function user(): BelongsTo
     {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    /**
+     * Get vendor account users (users that belong to this vendor)
+     */
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class, 'idvendor', 'idvendor');
+    }
+
+    /**
+     * Get the primary vendor account
+     */
+    public function vendorAccount(): BelongsTo
+    {
         return $this->belongsTo(User::class, 'user_id');
     }
 

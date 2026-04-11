@@ -44,7 +44,15 @@
                 </div>
                 <div>
                     <p class="text-sm text-gray-500 mb-1">Metode Pembayaran</p>
-                    <p class="font-semibold">{{ $pesanan->metode_bayar === 'qris' ? 'QRIS' : 'Virtual Account' }}</p>
+                    @php
+                        $paymentLabel = match($pesanan->metode_bayar) {
+                            'qris' => 'QRIS',
+                            'virtual_account' => 'Virtual Account',
+                            'ewallet' => 'E-Wallet',
+                            default => 'Midtrans'
+                        };
+                    @endphp
+                    <p class="font-semibold">{{ $paymentLabel }}</p>
                 </div>
             </div>
         </div>

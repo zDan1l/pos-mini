@@ -133,6 +133,9 @@ class AdminController extends Controller
             'idvendor' => $vendor->idvendor,
         ]);
 
+        // Update vendor's user_id for direct relationship
+        $vendor->update(['user_id' => $user->id]);
+
         return redirect()->route('admin.vendors')->with('success', 'Akun vendor berhasil dibuat');
     }
 

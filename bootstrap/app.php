@@ -15,6 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\IsAdmin::class,
             'vendor' => \App\Http\Middleware\IsVendor::class,
         ]);
+
+        $middleware->redirectGuestsTo(function () {
+            return route('auth.login');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

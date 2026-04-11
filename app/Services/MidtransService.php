@@ -7,8 +7,11 @@ use Illuminate\Support\Facades\Http;
 class MidtransService
 {
     protected string $serverKey;
+
     protected string $clientKey;
+
     protected string $apiUrl;
+
     protected bool $isProduction;
 
     public function __construct()
@@ -49,23 +52,16 @@ class MidtransService
             'item_details' => $params['items'] ?? [],
         ];
 
-        // Add custom expiry (1 hour)
-        $payload['expiry'] = [
-            'start_time' => now()->format('Y-m-d H:i:s T'),
-            'unit' => 'hours',
-            'duration' => 1,
-        ];
-
         $response = Http::withHeaders([
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
-            'Authorization' => 'Basic ' . base64_encode($this->serverKey . ':'),
-        ])->post($this->apiUrl . '/transactions', $payload);
+            'Authorization' => 'Basic '.base64_encode($this->serverKey.':'),
+        ])->post($this->apiUrl.'/transactions', $payload);
 
         $result = $response->json();
 
-        if (!$response->successful()) {
-            throw new \Exception('Midtrans API Error: ' . json_encode($result));
+        if (! $response->successful()) {
+            throw new \Exception('Midtrans API Error: '.json_encode($result));
         }
 
         return $result;
@@ -83,8 +79,8 @@ class MidtransService
         $response = Http::withHeaders([
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
-            'Authorization' => 'Basic ' . base64_encode($this->serverKey . ':'),
-        ])->get($apiUrl . '/' . $orderId . '/status');
+            'Authorization' => 'Basic '.base64_encode($this->serverKey.':'),
+        ])->get($apiUrl.'/'.$orderId.'/status');
 
         return $response->json();
     }
@@ -99,7 +95,7 @@ class MidtransService
         $grossAmount = $notification['gross_amount'];
         $signatureKey = $notification['signature_key'];
 
-        $signature = hash('sha512', $orderId . $statusCode . $grossAmount . $this->serverKey);
+        $signature = hash('sha512', $orderId.$statusCode.$grossAmount.$this->serverKey);
 
         return $signature === $signatureKey;
     }
@@ -123,6 +119,6 @@ class MidtransService
      */
     public function isConfigured(): bool
     {
-        return !empty($this->serverKey) && !empty($this->clientKey);
+        return ! empty($this->serverKey) && ! empty($this->clientKey);
     }
 }

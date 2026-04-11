@@ -37,10 +37,22 @@
                         <td class="px-6 py-4">{{ $order->user ? $order->user->name : 'Guest' }}</td>
                         <td class="px-6 py-4 text-gray-600 text-sm">{{ $order->timestamp->format('d M Y, H:i') }}</td>
                         <td class="px-6 py-4">
-                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium
-                                @if($order->metode_bayar === 'qris') bg-red-100 text-red-700
-                                @else bg-blue-100 text-blue-700 @endif">
-                                {{ $order->metode_bayar === 'qris' ? 'QRIS' : 'VA' }}
+                            @php
+                                $paymentBadgeClass = match($order->metode_bayar) {
+                                    'qris' => 'bg-red-100 text-red-700',
+                                    'virtual_account' => 'bg-blue-100 text-blue-700',
+                                    'ewallet' => 'bg-green-100 text-green-700',
+                                    default => 'bg-gray-100 text-gray-700'
+                                };
+                                $paymentLabel = match($order->metode_bayar) {
+                                    'qris' => 'QRIS',
+                                    'virtual_account' => 'Virtual Account',
+                                    'ewallet' => 'E-Wallet',
+                                    default => 'Midtrans'
+                                };
+                            @endphp
+                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium {{ $paymentBadgeClass }}">
+                                {{ $paymentLabel }}
                             </span>
                         </td>
                         <td class="px-6 py-4 text-right font-semibold text-orange-600">{{ formatRupiah($order->total) }}</td>
