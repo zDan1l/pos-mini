@@ -106,6 +106,8 @@
   src="{{ config('midtrans.is_production') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
   data-client-key="{{ config('midtrans.client_key') }}"></script>
 <script>
+    let pesananId = null;
+
     function processPayment() {
         const customerName = $('#customer_name').val();
         const btnPay = $('#btn-pay');
@@ -121,20 +123,40 @@
             },
             success: function(response) {
                 if (response.success && response.snap_token) {
+                    // Save pesanan ID for redirect after payment
+                    pesananId = response.pesanan_id;
+
                     // Open Midtrans Snap popup
                     snap.pay(response.snap_token, {
                         onSuccess: function(result) {
-                            window.location.href = '{{ route('customer.index') }}';
+                            // Redirect to order success page with QR Code
+                            if (pesananId) {
+                                window.location.href = '/order/success/' + pesananId;
+                            } else {
+                                window.location.href = '{{ route('customer.index') }}';
+                            }
                         },
                         onPending: function(result) {
-                            window.location.href = '{{ route('customer.index') }}';
+                            // For pending status, also redirect to success page
+                            // The page will check status and show appropriate message
+                            if (pesananId) {
+                                window.location.href = '/order/success/' + pesananId;
+                            } else {
+                                window.location.href = '{{ route('customer.index') }}';
+                            }
                         },
                         onError: function(result) {
                             alert('Pembayaran gagal. Silakan coba lagi.');
                             btnPay.prop('disabled', false).html('<i class="ph ph-credit-card mr-2"></i> Bayar Sekarang');
                         },
                         onClose: function() {
-                            btnPay.prop('disabled', false).html('<i class="ph ph-credit-card mr-2"></i> Bayar Sekarang');
+                            // User closed the popup without completing payment
+                            if (pesananId) {
+                                // Redirect to payment page to check status
+                                window.location.href = '/payment/' + pesananId;
+                            } else {
+                                btnPay.prop('disabled', false).html('<i class="ph ph-credit-card mr-2"></i> Bayar Sekarang');
+                            }
                         }
                     });
                 } else {

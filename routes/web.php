@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\CustomerManagementController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\VendorPanelController;
 use Illuminate\Support\Facades\Route;
@@ -25,11 +26,22 @@ Route::get('/checkout', [CustomerController::class, 'checkout'])->name('customer
 Route::post('/payment/process', [CustomerController::class, 'processPayment'])->name('customer.process-payment');
 Route::get('/payment/{idpesanan}', [CustomerController::class, 'payment'])->name('customer.payment');
 Route::get('/order/success/{idpesanan}', [CustomerController::class, 'orderSuccess'])->name('customer.order-success');
+Route::get('/qrcode/{content}', [CustomerController::class, 'generateQRCode'])->name('customer.qrcode');
 
 // Midtrans Callback Route (no CSRF, no auth)
 Route::post('/midtrans/callback', [CustomerController::class, 'midtransCallback'])
     ->name('midtrans.callback')
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+// Customer Management Routes (Admin only, requires auth)
+Route::middleware(['auth', 'admin'])->prefix('customer-management')->name('customer-management.')->group(function () {
+    Route::get('/', [CustomerManagementController::class, 'index'])->name('index');
+    Route::get('/create-blob', [CustomerManagementController::class, 'createBlob'])->name('create-blob');
+    Route::post('/store-blob', [CustomerManagementController::class, 'storeBlob'])->name('store-blob');
+    Route::get('/create-file', [CustomerManagementController::class, 'createFile'])->name('create-file');
+    Route::post('/store-file', [CustomerManagementController::class, 'storeFile'])->name('store-file');
+    Route::get('/photo/{id}', [CustomerManagementController::class, 'getPhoto'])->name('photo');
+});
 
 // Admin Routes (Admin only, requires auth)
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {

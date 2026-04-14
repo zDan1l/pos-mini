@@ -69,6 +69,23 @@
                     <i class="ph ph-shopping-cart text-xl"></i>
                     <span class="font-medium">Pesanan</span>
                 </a>
+
+                <!-- Customer Management -->
+                <div class="pt-4">
+                    <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Customer</p>
+                    <a href="{{ route('customer-management.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl {{ request()->routeIs('customer-management.index') ? 'bg-orange-50 text-orange-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <i class="ph ph-users text-xl"></i>
+                        <span class="font-medium">Data Customer</span>
+                    </a>
+                    <a href="{{ route('customer-management.create-blob') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl {{ request()->routeIs('customer-management.create-blob') ? 'bg-orange-50 text-orange-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <i class="ph ph-camera-plus text-xl"></i>
+                        <span class="font-medium">Tambah (BLOB)</span>
+                    </a>
+                    <a href="{{ route('customer-management.create-file') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl {{ request()->routeIs('customer-management.create-file') ? 'bg-orange-50 text-orange-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <i class="ph ph-image text-xl"></i>
+                        <span class="font-medium">Tambah (File)</span>
+                    </a>
+                </div>
             </nav>
 
             <div class="mt-8 pt-8 border-t border-gray-200">

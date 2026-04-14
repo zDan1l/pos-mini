@@ -8,6 +8,8 @@ use App\Models\Pesanan;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Services\MidtransService;
+use App\Services\QRCodeService;
+use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,9 +19,12 @@ class CustomerController extends Controller
 {
     protected MidtransService $midtransService;
 
-    public function __construct(MidtransService $midtransService)
+    protected QRCodeService $qrCodeService;
+
+    public function __construct(MidtransService $midtransService, QRCodeService $qrCodeService)
     {
         $this->midtransService = $midtransService;
+        $this->qrCodeService = $qrCodeService;
     }
 
     public function index()
@@ -236,18 +241,12 @@ class CustomerController extends Controller
                 ];
             }
 
-            $paymentRef = 'ORDER-' . strtoupper(Str::random(12));
+            // Generate order ID with format: ORD-YYMMDDXXXX (8 digits: YYMMDD + 4 digit sequence)
+            $datePart = now()->format('ymd'); // YYMMDD (6 digits)
+            $sequence = str_pad(Pesanan::whereDate('created_at', today())->count() + 1, 4, '0', STR_PAD_LEFT); // 4 digits
+            $paymentRef = 'ORD-' . $datePart . $sequence; // e.g., ORD-2404140001
 
-            // Create Midtrans Snap transaction
-            $midtransResponse = $this->midtransService->createSnapTransaction([
-                'order_id' => $paymentRef,
-                'gross_amount' => (int) $total,
-                'customer_name' => $customer->name,
-                'customer_email' => $customer->email,
-                'items' => $itemDetails,
-            ]);
-
-            // Save order
+            // Save order first (before Midtrans call)
             $pesanan = Pesanan::create([
                 'nama' => 'POS-' . $paymentRef,
                 'timestamp' => now(),
@@ -274,6 +273,17 @@ class CustomerController extends Controller
                 ]);
             }
 
+            // Create Midtrans Snap transaction with finish_url
+            $finishUrl = route('customer.order-success', $pesanan->idpesanan);
+            $midtransResponse = $this->midtransService->createSnapTransaction([
+                'order_id' => $paymentRef,
+                'gross_amount' => (int) $total,
+                'customer_name' => $customer->name,
+                'customer_email' => $customer->email,
+                'items' => $itemDetails,
+                'finish_url' => $finishUrl,
+            ]);
+
             session()->forget(['cart', 'cart_vendor_id']);
 
             DB::commit();
@@ -284,6 +294,7 @@ class CustomerController extends Controller
                     'success' => true,
                     'snap_token' => $midtransResponse['token'],
                     'redirect_url' => $midtransResponse['redirect_url'] ?? null,
+                    'pesanan_id' => $pesanan->idpesanan,
                 ]);
             }
 
@@ -385,8 +396,9 @@ class CustomerController extends Controller
         $pesanan = Pesanan::with(['user', 'vendor', 'detailPesanan.menu'])
             ->findOrFail($idpesanan);
 
+        // For sandbox/simulator: always show the page with QR code
+        // Check and update status from Midtrans if not already 'lunas'
         if ($pesanan->status_bayar !== 'lunas') {
-            // Check Midtrans status
             try {
                 $midtransStatus = $this->midtransService->getTransactionStatus($pesanan->payment_reference);
                 $newStatus = $this->midtransService->mapStatus($midtransStatus['transaction_status'] ?? 'pending');
@@ -394,7 +406,6 @@ class CustomerController extends Controller
 
                 $updateData = ['status_bayar' => $newStatus];
 
-                // Also update payment method if available
                 if ($paymentType) {
                     $updateData['metode_bayar'] = $this->mapPaymentType($paymentType);
                 }
@@ -402,18 +413,30 @@ class CustomerController extends Controller
                 if ($newStatus === 'lunas' || $paymentType) {
                     $pesanan->update($updateData);
                 }
+
+                // Reload to get updated data
+                $pesanan = $pesanan->fresh();
             } catch (\Exception $e) {
                 Log::error('Error checking Midtrans status: ' . $e->getMessage());
             }
-
-            // Reload to get updated data
-            $pesanan = $pesanan->fresh();
-
-            if ($pesanan->status_bayar !== 'lunas') {
-                return redirect()->route('customer.index')->with('error', 'Pesanan belum lunas');
-            }
         }
 
+        // Always show the order success page with QR code (for testing/development)
         return view('customer.order-success', compact('pesanan'));
+    }
+
+    /**
+     * Generate QR Code for order reference (with UTF-8 encoding)
+     */
+    public function generateQRCode($content)
+    {
+        // Ensure UTF-8 encoding for QR Code content
+        $content = mb_convert_encoding($content, 'UTF-8', 'UTF-8');
+
+        $qrCodeData = $this->qrCodeService->generateAsRawPng($content);
+
+        return response($qrCodeData, 200)
+            ->header('Content-Type', 'image/png')
+            ->header('Cache-Control', 'public, max-age=86400');
     }
 }

@@ -50,6 +50,27 @@
                     <a href="{{ route('customer.index') }}" class="hover:text-orange-100 flex items-center gap-1">
                         <i class="ph ph-house"></i> Beranda
                     </a>
+
+                    {{-- Customer Management Menu (Admin only) --}}
+                    @if(auth()->check() && auth()->user()->isAdmin())
+                        <div class="relative group">
+                            <button class="hover:text-orange-100 flex items-center gap-1">
+                                <i class="ph ph-users"></i> Customer
+                                <i class="ph ph-caret-down text-xs"></i>
+                            </button>
+                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden group-hover:block z-50">
+                                <a href="{{ route('customer-management.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600">
+                                    <i class="ph ph-list-dashes mr-2"></i> Data Customer
+                                </a>
+                                <a href="{{ route('customer-management.create-blob') }}" class="block px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600">
+                                    <i class="ph ph-camera-plus mr-2"></i> Tambah (BLOB)
+                                </a>
+                                <a href="{{ route('customer-management.create-file') }}" class="block px-4 py-2 text-gray-700 hover:bg-orange-50 hover:text-orange-600">
+                                    <i class="ph ph-image mr-2"></i> Tambah (File)
+                                </a>
+                            </div>
+                        </div>
+                    @endif
                     <a href="{{ route('customer.cart') }}" class="hover:text-orange-100 flex items-center gap-1 relative">
                         <i class="ph ph-shopping-cart"></i> Keranjang
                         @if(session('cart'))

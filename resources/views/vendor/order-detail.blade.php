@@ -75,8 +75,23 @@
     </div>
 
     <!-- Total -->
-    <div class="lg:col-span-1">
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-6">
+    <div class="lg:col-span-1 space-y-6">
+        <!-- QR Code Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-4 text-center">QR Code Pesanan</h2>
+            <div class="text-center">
+                <div class="bg-gray-50 p-4 rounded-xl inline-block mb-4">
+                    <img src="{{ route('customer.qrcode', $pesanan->payment_reference) }}"
+                         alt="QR Code {{ $pesanan->payment_reference }}"
+                         class="w-40 h-40 mx-auto">
+                </div>
+                <p class="text-sm text-gray-600 mb-1">{{ $pesanan->payment_reference }}</p>
+                <p class="text-xs text-gray-500">Scan untuk melihat nomor pesanan</p>
+            </div>
+        </div>
+
+        <!-- Payment Summary -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h2 class="text-lg font-bold text-gray-900 mb-4">Ringkasan Pembayaran</h2>
 
             <div class="space-y-3">

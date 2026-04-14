@@ -52,6 +52,11 @@ class MidtransService
             'item_details' => $params['items'] ?? [],
         ];
 
+        // Add finish_url for redirect after payment
+        if (isset($params['finish_url'])) {
+            $payload['finish_url'] = $params['finish_url'];
+        }
+
         $response = Http::withHeaders([
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',

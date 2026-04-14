@@ -14,11 +14,34 @@
         <h2 class="text-2xl font-bold text-gray-800 mb-2">Pesanan Berhasil!</h2>
         <p class="text-gray-600 mb-6">Terima kasih telah memesan di Kantin Online</p>
 
+        @if($pesanan->status_bayar === 'lunas')
+            <div class="bg-green-50 text-green-700 px-4 py-2 rounded-lg mb-4 inline-flex items-center gap-2">
+                <i class="ph ph-check-circle"></i>
+                <span>Pembayaran Lunas</span>
+            </div>
+        @else
+            <div class="bg-yellow-50 text-yellow-700 px-4 py-2 rounded-lg mb-4 inline-flex items-center gap-2">
+                <i class="ph ph-clock"></i>
+                <span>Menunggu konfirmasi pembayaran...</span>
+            </div>
+        @endif
+
         <div class="bg-gray-50 rounded-lg p-4 mb-6">
             <p class="text-sm text-gray-600 mb-1">Nomor Pesanan</p>
             <p class="text-lg font-bold">{{ $pesanan->payment_reference }}</p>
             <p class="text-sm text-gray-600 mt-2">Nama: {{ $pesanan->user ? $pesanan->user->name : 'Guest' }}</p>
             <p class="text-sm text-gray-600">Vendor: {{ $pesanan->vendor->nama_vendor }}</p>
+        </div>
+
+        <!-- QR Code Section -->
+        <div class="bg-gray-50 rounded-lg p-6 mb-6">
+            <p class="text-sm text-gray-600 mb-3 text-center">Scan QR Code untuk melihat nomor pesanan</p>
+            <div class="flex justify-center">
+                <img src="{{ route('customer.qrcode', $pesanan->payment_reference) }}"
+                     alt="QR Code Pesanan"
+                     class="border-4 border-white rounded-lg shadow-sm w-48 h-48">
+            </div>
+            <p class="text-xs text-gray-500 mt-3 text-center">Scan untuk membaca: {{ $pesanan->payment_reference }}</p>
         </div>
 
         <div class="text-left border-t pt-4 mb-6">
