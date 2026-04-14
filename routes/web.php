@@ -41,6 +41,9 @@ Route::middleware(['auth', 'admin'])->prefix('customer-management')->name('custo
     Route::get('/create-file', [CustomerManagementController::class, 'createFile'])->name('create-file');
     Route::post('/store-file', [CustomerManagementController::class, 'storeFile'])->name('store-file');
     Route::get('/photo/{id}', [CustomerManagementController::class, 'getPhoto'])->name('photo');
+    Route::get('/{id}/edit', [CustomerManagementController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [CustomerManagementController::class, 'update'])->name('update');
+    Route::delete('/{id}', [CustomerManagementController::class, 'destroy'])->name('destroy');
 });
 
 // Admin Routes (Admin only, requires auth)

@@ -1,15 +1,15 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Tambah Customer (BLOB)')
 
 @section('content')
-<div class="max-w-2xl mx-auto">
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
-        <div class="p-6 border-b border-gray-100">
-            <h2 class="text-xl font-bold text-gray-800">Tambah Customer (BLOB)</h2>
-            <p class="text-sm text-gray-500 mt-1">Simpan foto customer sebagai BLOB di database</p>
-        </div>
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Tambah Customer (BLOB)</h1>
+    <p class="text-gray-600">Simpan foto customer sebagai BLOB di database</p>
+</div>
 
+<div class="max-w-2xl">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
         <div class="p-6">
             <form id="customerForm" class="space-y-4">
                 @csrf
@@ -126,176 +126,177 @@
 </div>
 
 @push('scripts')
-<script>
-let stream = null;
-let capturedPhoto = null;
+    <script>
+    let stream = null;
+    let capturedPhoto = null;
 
-// Elements
-const btnOpenCamera = document.getElementById('btnOpenCamera');
-const btnCloseCamera = document.getElementById('btnCloseCamera');
-const btnCancelCamera = document.getElementById('btnCancelCamera');
-const btnCapture = document.getElementById('btnCapture');
-const btnSavePhoto = document.getElementById('btnSavePhoto');
-const cameraModal = document.getElementById('cameraModal');
-const videoFeed = document.getElementById('videoFeed');
-const photoCanvas = document.getElementById('photoCanvas');
-const snapshotPreview = document.getElementById('snapshotPreview');
-const snapshotPlaceholder = document.getElementById('snapshotPlaceholder');
-const cameraSelect = document.getElementById('cameraSelect');
-const photoPreview = document.getElementById('photoPreview');
-const photoDataInput = document.getElementById('photo_data');
-const photoMimeTypeInput = document.getElementById('photo_mime_type');
+    // Elements
+    const btnOpenCamera = document.getElementById('btnOpenCamera');
+    const btnCloseCamera = document.getElementById('btnCloseCamera');
+    const btnCancelCamera = document.getElementById('btnCancelCamera');
+    const btnCapture = document.getElementById('btnCapture');
+    const btnSavePhoto = document.getElementById('btnSavePhoto');
+    const cameraModal = document.getElementById('cameraModal');
+    const videoFeed = document.getElementById('videoFeed');
+    const photoCanvas = document.getElementById('photoCanvas');
+    const snapshotPreview = document.getElementById('snapshotPreview');
+    const snapshotPlaceholder = document.getElementById('snapshotPlaceholder');
+    const cameraSelect = document.getElementById('cameraSelect');
+    const photoPreview = document.getElementById('photoPreview');
+    const photoDataInput = document.getElementById('photo_data');
+    const photoMimeTypeInput = document.getElementById('photo_mime_type');
 
-// Open camera modal
-btnOpenCamera.addEventListener('click', async () => {
-    cameraModal.classList.remove('hidden');
-    await getCameraDevices();
-    await startCamera();
-});
+    // Open camera modal
+    btnOpenCamera.addEventListener('click', async () => {
+        cameraModal.classList.remove('hidden');
+        await getCameraDevices();
+        await startCamera();
+    });
 
-// Close camera modal
-function closeCameraModal() {
-    cameraModal.classList.add('hidden');
-    stopCamera();
-}
+    // Close camera modal
+    function closeCameraModal() {
+        cameraModal.classList.add('hidden');
+        stopCamera();
+    }
 
-btnCloseCamera.addEventListener('click', closeCameraModal);
-btnCancelCamera.addEventListener('click', closeCameraModal);
+    btnCloseCamera.addEventListener('click', closeCameraModal);
+    btnCancelCamera.addEventListener('click', closeCameraModal);
 
-// Get available cameras
-async function getCameraDevices() {
-    try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+    // Get available cameras
+    async function getCameraDevices() {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
-        cameraSelect.innerHTML = '';
-        videoDevices.forEach((device, index) => {
-            const option = document.createElement('option');
-            option.value = device.deviceId;
-            option.text = device.label || `Kamera ${index + 1}`;
-            cameraSelect.appendChild(option);
-        });
+            cameraSelect.innerHTML = '';
+            videoDevices.forEach((device, index) => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.text = device.label || `Kamera ${index + 1}`;
+                cameraSelect.appendChild(option);
+            });
 
-        if (videoDevices.length > 0) {
-            startCamera(videoDevices[0].deviceId);
+            if (videoDevices.length > 0) {
+                startCamera(videoDevices[0].deviceId);
+            }
+        } catch (err) {
+            console.error('Error getting camera devices:', err);
         }
-    } catch (err) {
-        console.error('Error getting camera devices:', err);
     }
-}
 
-// Start camera
-async function startCamera(deviceId = null) {
-    stopCamera();
+    // Start camera
+    async function startCamera(deviceId = null) {
+        stopCamera();
 
-    const constraints = {
-        video: {
-            facingMode: 'user',
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
+        const constraints = {
+            video: {
+                facingMode: 'user',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        };
+
+        if (deviceId) {
+            constraints.video.deviceId = { exact: deviceId };
         }
-    };
 
-    if (deviceId) {
-        constraints.video.deviceId = { exact: deviceId };
+        try {
+            stream = await navigator.mediaDevices.getUserMedia(constraints);
+            videoFeed.srcObject = stream;
+        } catch (err) {
+            console.error('Error accessing camera:', err);
+            alert('Tidak dapat mengakses kamera. Pastikan Anda telah memberikan izin kamera.');
+        }
     }
 
-    try {
-        stream = await navigator.mediaDevices.getUserMedia(constraints);
-        videoFeed.srcObject = stream;
-    } catch (err) {
-        console.error('Error accessing camera:', err);
-        alert('Tidak dapat mengakses kamera. Pastikan Anda telah memberikan izin kamera.');
-    }
-}
-
-// Stop camera
-function stopCamera() {
-    if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
-    }
-}
-
-// Change camera
-cameraSelect.addEventListener('change', () => {
-    startCamera(cameraSelect.value);
-});
-
-// Capture photo
-btnCapture.addEventListener('click', () => {
-    const context = photoCanvas.getContext('2d');
-    photoCanvas.width = videoFeed.videoWidth;
-    photoCanvas.height = videoFeed.videoHeight;
-    context.drawImage(videoFeed, 0, 0);
-
-    capturedPhoto = photoCanvas.toDataURL('image/jpeg', 0.8);
-
-    snapshotPreview.src = capturedPhoto;
-    snapshotPreview.classList.remove('hidden');
-    snapshotPlaceholder.classList.add('hidden');
-    btnSavePhoto.disabled = false;
-});
-
-// Save photo to form
-btnSavePhoto.addEventListener('click', () => {
-    if (capturedPhoto) {
-        // Update preview in form
-        photoPreview.innerHTML = `<img src="${capturedPhoto}" class="w-full h-full object-cover">`;
-
-        // Set form data
-        photoDataInput.value = capturedPhoto;
-        photoMimeTypeInput.value = 'image/jpeg';
-
-        closeCameraModal();
-    }
-});
-
-// Camera select change
-cameraSelect.addEventListener('change', () => {
-    startCamera(cameraSelect.value);
-});
-
-// Form submission
-document.getElementById('customerForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    if (!photoDataInput.value) {
-        alert('Silakan ambil foto terlebih dahulu!');
-        return;
+    // Stop camera
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
     }
 
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData.entries());
+    // Change camera
+    cameraSelect.addEventListener('change', () => {
+        startCamera(cameraSelect.value);
+    });
 
-    btnSubmit.disabled = true;
-    btnSubmit.innerHTML = '<i class="ph ph-spinner animate-spin mr-2"></i> Menyimpan...';
+    // Capture photo
+    btnCapture.addEventListener('click', () => {
+        const context = photoCanvas.getContext('2d');
+        photoCanvas.width = videoFeed.videoWidth;
+        photoCanvas.height = videoFeed.videoHeight;
+        context.drawImage(videoFeed, 0, 0);
 
-    try {
-        const response = await fetch('{{ route('customer-management.store-blob') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify(data)
-        });
+        capturedPhoto = photoCanvas.toDataURL('image/jpeg', 0.8);
 
-        const result = await response.json();
+        snapshotPreview.src = capturedPhoto;
+        snapshotPreview.classList.remove('hidden');
+        snapshotPlaceholder.classList.add('hidden');
+        btnSavePhoto.disabled = false;
+    });
 
-        if (result.success) {
-            window.location.href = result.redirect;
-        } else {
-            alert(result.message || 'Terjadi kesalahan!');
+    // Save photo to form
+    btnSavePhoto.addEventListener('click', () => {
+        if (capturedPhoto) {
+            // Update preview in form
+            photoPreview.innerHTML = `<img src="${capturedPhoto}" class="w-full h-full object-cover">`;
+
+            // Set form data
+            photoDataInput.value = capturedPhoto;
+            photoMimeTypeInput.value = 'image/jpeg';
+
+            closeCameraModal();
+        }
+    });
+
+    // Camera select change
+    cameraSelect.addEventListener('change', () => {
+        startCamera(cameraSelect.value);
+    });
+
+    // Form submission
+    document.getElementById('customerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        if (!photoDataInput.value) {
+            alert('Silakan ambil foto terlebih dahulu!');
+            return;
+        }
+
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<i class="ph ph-spinner animate-spin mr-2"></i> Menyimpan...';
+
+        try {
+            const response = await fetch('{{ route('customer-management.store-blob') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                window.location.href = result.redirect;
+            } else {
+                alert(result.message || 'Terjadi kesalahan!');
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '<i class="ph ph-floppy-disk mr-2"></i> Simpan Data';
+            }
+        } catch (err) {
+            console.error('Error:', err);
+            alert('Terjadi kesalahan!');
             btnSubmit.disabled = false;
             btnSubmit.innerHTML = '<i class="ph ph-floppy-disk mr-2"></i> Simpan Data';
         }
-    } catch (err) {
-        console.error('Error:', err);
-        alert('Terjadi kesalahan!');
-        btnSubmit.disabled = false;
-        btnSubmit.innerHTML = '<i class="ph ph-floppy-disk mr-2"></i> Simpan Data';
-    }
-});
-</script>
+    });
+    </script>
 @endpush
+@endsection
