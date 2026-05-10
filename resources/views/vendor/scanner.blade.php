@@ -91,28 +91,15 @@
 
     @push('scripts')
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="{{ asset('assets/audio/scan-beep.js') }}"></script>
     <script>
     let html5QrcodeScanner = null;
     let isScanning = false;
+    let scanSound = new ScanSound();
 
-    // Beep sound
+    // Beep sound - menggunakan audio file
     function playBeep() {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.value = 1500; // even higher pitch for maximum audibility
-        oscillator.type = 'sine';
-
-        // Maximum volume (1.0 is the max before distortion)
-        gainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.2); // longer duration for better audibility
+        scanSound.playBeep();
     }
 
     // Start scanner

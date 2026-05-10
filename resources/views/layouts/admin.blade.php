@@ -70,6 +70,15 @@
                     <span class="font-medium">Pesanan</span>
                 </a>
 
+                <!-- Kunjungan Toko -->
+                <div class="pt-4">
+                    <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Kunjungan Toko</p>
+                    <a href="{{ route('admin.stores.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl {{ request()->routeIs('admin.stores*') ? 'bg-orange-50 text-orange-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <i class="ph ph-map-pin text-xl"></i>
+                        <span class="font-medium">Data Toko</span>
+                    </a>
+                </div>
+
                 <!-- Customer Management -->
                 <div class="pt-4">
                     <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Customer</p>

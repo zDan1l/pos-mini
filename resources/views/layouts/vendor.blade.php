@@ -69,6 +69,23 @@
                     <i class="ph ph-qr-code text-xl"></i>
                     <span class="font-medium">Scan QR Code</span>
                 </a>
+
+                <!-- Kunjungan Toko -->
+                <div class="pt-4">
+                    <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Kunjungan Toko</p>
+                    <a href="{{ route('vendor.store-visit.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl {{ request()->routeIs('vendor.store-visit.index') ? 'bg-orange-50 text-orange-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <i class="ph ph-map-pin text-xl"></i>
+                        <span class="font-medium">Daftar Toko</span>
+                    </a>
+                    <a href="{{ route('vendor.store-visit.visit') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl {{ request()->routeIs('vendor.store-visit.visit') ? 'bg-orange-50 text-orange-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <i class="ph ph-qr-code text-xl"></i>
+                        <span class="font-medium">Scan Kunjungan</span>
+                    </a>
+                    <a href="{{ route('vendor.store-visit.history') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl {{ request()->routeIs('vendor.store-visit.history') ? 'bg-orange-50 text-orange-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                        <i class="ph ph-clock-counter-clockwise text-xl"></i>
+                        <span class="font-medium">Riwayat</span>
+                    </a>
+                </div>
             </nav>
 
             <div class="mt-8 pt-8 border-t border-gray-200">

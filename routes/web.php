@@ -4,6 +4,8 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerManagementController;
+use App\Http\Controllers\StoreController;
+use App\Http\Controllers\StoreVisitController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\VendorPanelController;
 use Illuminate\Support\Facades\Route;
@@ -68,6 +70,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     Route::get('/orders', [AdminController::class, 'orders'])->name('orders');
     Route::get('/orders/{idpesanan}', [AdminController::class, 'orderDetail'])->name('order-detail');
+
+    Route::get('/stores', [StoreController::class, 'index'])->name('stores.index');
+    Route::get('/stores/create', [StoreController::class, 'create'])->name('stores.create');
+    Route::post('/stores', [StoreController::class, 'store'])->name('stores.store');
+    Route::get('/stores/{idtoko}/edit', [StoreController::class, 'edit'])->name('stores.edit');
+    Route::put('/stores/{idtoko}', [StoreController::class, 'update'])->name('stores.update');
+    Route::delete('/stores/{idtoko}', [StoreController::class, 'destroy'])->name('stores.destroy');
+    Route::get('/stores/{idtoko}/barcode', [StoreController::class, 'generateBarcode'])->name('stores.barcode');
 });
 
 // Vendor Panel Routes (Vendor only, requires auth)
@@ -84,4 +94,12 @@ Route::middleware(['auth', 'vendor'])->prefix('vendor-panel')->name('vendor.')->
     Route::get('/orders/{idpesanan}', [VendorPanelController::class, 'orderDetail'])->name('order-detail');
     Route::get('/scanner', [VendorPanelController::class, 'scanner'])->name('scanner');
     Route::get('/scanner/lookup/{orderRef}', [VendorPanelController::class, 'scannerLookup'])->name('scanner-lookup');
+
+    Route::prefix('store-visit')->name('store-visit.')->group(function () {
+        Route::get('/', [StoreVisitController::class, 'index'])->name('index');
+        Route::get('/visit', [StoreVisitController::class, 'visit'])->name('visit');
+        Route::get('/lookup/{barcode}', [StoreVisitController::class, 'lookupStore'])->name('lookup');
+        Route::post('/process', [StoreVisitController::class, 'processVisit'])->name('process');
+        Route::get('/history', [StoreVisitController::class, 'history'])->name('history');
+    });
 });

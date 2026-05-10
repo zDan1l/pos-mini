@@ -11,7 +11,8 @@
       "Bash(composer require:*)",
       "Bash(php -l app/Http/Controllers/CustomerController.php)",
       "Bash(php -l app/Http/Controllers/VendorPanelController.php)",
-      "Bash(php -l app/Models/User.php)"
+      "Bash(php -l app/Models/User.php)",
+      "Bash(php -r ' *)"
     ]
   }
 }
