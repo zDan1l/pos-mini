@@ -284,6 +284,14 @@ class CustomerController extends Controller
                 'finish_url' => $finishUrl,
             ]);
 
+            // Store order ID in session for guest users
+            if (!auth()->check()) {
+                $recentOrders = session('recent_orders', []);
+                array_unshift($recentOrders, $pesanan->idpesanan);
+                // Keep only last 10 orders
+                session(['recent_orders' => array_slice($recentOrders, 0, 10)]);
+            }
+
             session()->forget(['cart', 'cart_vendor_id']);
 
             DB::commit();
@@ -438,5 +446,30 @@ class CustomerController extends Controller
         return response($qrCodeData, 200)
             ->header('Content-Type', 'image/png')
             ->header('Cache-Control', 'public, max-age=86400');
+    }
+
+    /**
+     * Display customer's order history
+     */
+    public function myOrders(Request $request)
+    {
+        // Get recent orders from session or from authenticated user
+        $recentOrderIds = session('recent_orders', []);
+
+        if (auth()->check()) {
+            // Get all orders for authenticated user
+            $orders = Pesanan::with(['vendor', 'detailPesanan.menu'])
+                ->where('user_id', auth()->id())
+                ->orderBy('timestamp', 'desc')
+                ->get();
+        } else {
+            // Get recent orders from session for guest users
+            $orders = Pesanan::with(['vendor', 'detailPesanan.menu'])
+                ->whereIn('idpesanan', $recentOrderIds)
+                ->orderBy('timestamp', 'desc')
+                ->get();
+        }
+
+        return view('customer.my-orders', compact('orders'));
     }
 }

@@ -1,0 +1,16 @@
+Praktikum 2:
+Update aplikasi kantin anda:
+Customer:
+a.	Setelah pembayaran berhasil, tampilkan QRcode yang berisi idpesanan
+b.	Pastikan customer dapat terus mengakses QRcode ini, setelah halaman pemesanan yang sedang berjalan tersebut ditutup.
+Vendor:
+a.	Buat satu halaman baru, dimana vendor dapat melakukan scan QRcode dari customer
+b.	Hasil baca QRcode adalah menu yang dipesan oleh customer pada vendor tersebut dan status bayarnya
+c.	Perhatikan, urutan yang dilakukan setelah berhasil baca QRcode nya adalah:
+•	Dikeluarkan bunyi “beep” pendek
+•	Scanner berhenti scan
+•	Menampilkan menu yang dipesan dan status bayarnya
+
+Salah satu link untuk download suara beep:
+https://pixabay.com/id/sound-effects/search/beeps/
+

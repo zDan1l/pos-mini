@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -85,15 +86,12 @@ class User extends Authenticatable
             $nextNumber = (int) $matches[1] + 1;
         }
 
-        // Generate unique email - add random suffix if custom name is provided
+        // Generate unique email using uniqid and random string to prevent duplicates
         $guestName = $name ?? 'Guest_' . str_pad($nextNumber, 7, '0', STR_PAD_LEFT);
+        $uniqueId = uniqid('', true) . '_' . Str::random(8);
 
-        if ($name) {
-            // For custom names, add timestamp to ensure uniqueness
-            $email = 'guest_' . $nextNumber . '_' . time() . '@dummy.com';
-        } else {
-            $email = 'guest_' . $nextNumber . '@dummy.com';
-        }
+        // Create truly unique email
+        $email = 'guest_' . $uniqueId . '@dummy.com';
 
         return self::create([
             'name' => $guestName,

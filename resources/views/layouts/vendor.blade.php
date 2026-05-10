@@ -65,6 +65,10 @@
                     <i class="ph ph-shopping-cart text-xl"></i>
                     <span class="font-medium">Pesanan</span>
                 </a>
+                <a href="{{ route('vendor.scanner') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl {{ request()->routeIs('vendor.scanner*') ? 'bg-orange-50 text-orange-600' : 'text-gray-700 hover:bg-gray-100' }}">
+                    <i class="ph ph-qr-code text-xl"></i>
+                    <span class="font-medium">Scan QR Code</span>
+                </a>
             </nav>
 
             <div class="mt-8 pt-8 border-t border-gray-200">

@@ -149,4 +149,49 @@ class VendorPanelController extends Controller
 
         return view('vendor.order-detail', compact('vendor', 'pesanan'));
     }
+
+    public function scanner()
+    {
+        $vendor = $this->getVendor();
+        return view('vendor.scanner', compact('vendor'));
+    }
+
+    public function scannerLookup($orderRef)
+    {
+        $vendor = $this->getVendor();
+
+        // Find order by payment reference
+        $pesanan = Pesanan::with(['user', 'detailPesanan.menu', 'vendor'])
+            ->where('payment_reference', $orderRef)
+            ->where('idvendor', $vendor->idvendor)
+            ->first();
+
+        if (!$pesanan) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesanan tidak ditemukan atau bukan dari vendor Anda',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'idpesanan' => $pesanan->idpesanan,
+                'payment_reference' => $pesanan->payment_reference,
+                'status_bayar' => $pesanan->status_bayar,
+                'metode_bayar' => $pesanan->metode_bayar,
+                'total' => $pesanan->total,
+                'timestamp' => $pesanan->timestamp->format('d M Y H:i'),
+                'customer_name' => $pesanan->customer_name,
+                'items' => $pesanan->detailPesanan->map(function ($detail) {
+                    return [
+                        'nama_menu' => $detail->menu->nama_menu,
+                        'jumlah' => $detail->jumlah,
+                        'harga' => $detail->harga,
+                        'subtotal' => $detail->subtotal,
+                    ];
+                }),
+            ],
+        ]);
+    }
 }

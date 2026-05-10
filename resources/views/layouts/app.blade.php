@@ -50,6 +50,9 @@
                     <a href="{{ route('customer.index') }}" class="hover:text-orange-100 flex items-center gap-1">
                         <i class="ph ph-house"></i> Beranda
                     </a>
+                    <a href="{{ route('customer.my-orders') }}" class="hover:text-orange-100 flex items-center gap-1">
+                        <i class="ph ph-receipt"></i> Pesanan Saya
+                    </a>
 
                     {{-- Customer Management Menu (Admin only) --}}
                     @if(auth()->check() && auth()->user()->isAdmin())

@@ -8,7 +8,10 @@
       "Bash(curl -s \"http://localhost:8000\")",
       "Bash(curl -s \"http://localhost:8000/login\")",
       "Bash(grep -v \"^\\\\.$|^\\\\.\\\\.$|vendor|node_modules|.git|storage|bootstrap\")",
-      "Bash(composer require:*)"
+      "Bash(composer require:*)",
+      "Bash(php -l app/Http/Controllers/CustomerController.php)",
+      "Bash(php -l app/Http/Controllers/VendorPanelController.php)",
+      "Bash(php -l app/Models/User.php)"
     ]
   }
 }

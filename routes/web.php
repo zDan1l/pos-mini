@@ -27,6 +27,7 @@ Route::post('/payment/process', [CustomerController::class, 'processPayment'])->
 Route::get('/payment/{idpesanan}', [CustomerController::class, 'payment'])->name('customer.payment');
 Route::get('/order/success/{idpesanan}', [CustomerController::class, 'orderSuccess'])->name('customer.order-success');
 Route::get('/qrcode/{content}', [CustomerController::class, 'generateQRCode'])->name('customer.qrcode');
+Route::get('/my-orders', [CustomerController::class, 'myOrders'])->name('customer.my-orders');
 
 // Midtrans Callback Route (no CSRF, no auth)
 Route::post('/midtrans/callback', [CustomerController::class, 'midtransCallback'])
@@ -81,4 +82,6 @@ Route::middleware(['auth', 'vendor'])->prefix('vendor-panel')->name('vendor.')->
 
     Route::get('/orders', [VendorPanelController::class, 'orders'])->name('orders');
     Route::get('/orders/{idpesanan}', [VendorPanelController::class, 'orderDetail'])->name('order-detail');
+    Route::get('/scanner', [VendorPanelController::class, 'scanner'])->name('scanner');
+    Route::get('/scanner/lookup/{orderRef}', [VendorPanelController::class, 'scannerLookup'])->name('scanner-lookup');
 });
